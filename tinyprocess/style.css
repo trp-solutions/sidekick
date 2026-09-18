@@ -1,0 +1,10 @@
+:root { color-scheme: light dark; font: 16px/1.5 system-ui, sans-serif; }
+body { margin: 0; min-height: 100vh; display: grid; place-items: center; }
+main { width: min(460px, calc(100% - 64px)); padding: 32px; }
+h1 { font-size: 26px; line-height: 1.2; }
+p { opacity: .75; }
+label { display: block; margin: 20px 0 6px; }
+input { box-sizing: border-box; width: 100%; padding: 10px; font: inherit; }
+button { padding: 10px 18px; font: inherit; cursor: pointer; }
+form button[type="submit"] { margin-top: 20px; }
+#message { min-height: 24px; }

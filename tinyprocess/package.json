@@ -1,0 +1,65 @@
+{
+  "name": "tiny-process",
+  "version": "1.1.0",
+  "description": "TinyTask project management status and ESP display companion",
+  "main": "main.js",
+  "author": {
+    "name": "Mikkel",
+    "email": "mikkeliversen09@outlook.dk"
+  },
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "build:media": "python3 scripts/build-media.py"
+  },
+  "devDependencies": {
+    "electron": "^36.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "trp.solutions.tiny_process",
+    "productName": "TinyProcess",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "lib/**/*",
+      "*.html",
+      "style.css",
+      "icon.png",
+      "media/colors-idle.rgb565.gz",
+      "package.json"
+    ],
+    "mac": {
+      "target": "dmg",
+      "icon": "icon.png"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "icon.png",
+      "category": "Utility"
+    },
+    "asarUnpack": [
+      "node_modules/@serialport/**/*",
+      "node_modules/ffmpeg-static/**/*"
+    ]
+  },
+  "dependencies": {
+    "ffmpeg-static": "^5.3.0",
+    "serialport": "^13.0.0"
+  },
+  "allowScripts": {
+    "ffmpeg-static@5.3.0": true
+  }
+}

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'">
+  <title>TinyProcess Settings</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>Settings</h1>
+    <form>
+      <label for="configUrl">Config URL</label>
+      <input id="configUrl" name="configUrl" type="url" required placeholder="https://example.com/api/config">
+      <label for="serialPort">USB port (optional)</label>
+      <input id="serialPort" name="serialPort" placeholder="Automatic">
+      <button type="submit">Save and reconnect</button>
+      <p id="message" role="status"></p>
+    </form>
+  </main>
+  <script src="renderer.js"></script>
+</body>
+</html>
