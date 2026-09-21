@@ -1,7 +1,7 @@
 {
-  "name": "tiny-process",
+  "name": "sidekick",
   "version": "1.1.0",
-  "description": "TinyTask project management status and ESP display companion",
+  "description": "Sidekick project management status and ESP display companion",
   "main": "main.js",
   "author": {
     "name": "Mikkel",
@@ -18,8 +18,8 @@
     "electron-builder": "^26.0.12"
   },
   "build": {
-    "appId": "trp.solutions.tiny_process",
-    "productName": "TinyProcess",
+    "appId": "trp.solutions.sidekick",
+    "productName": "Sidekick",
     "directories": {
       "output": "dist"
     },
@@ -60,6 +60,9 @@
     "serialport": "^13.0.0"
   },
   "allowScripts": {
-    "ffmpeg-static@5.3.0": true
+    "ffmpeg-static@5.3.0": true,
+    "electron@36.9.5": true,
+    "@serialport/bindings-cpp@13.0.0": true,
+    "electron-winstaller@5.4.0": true
   }
 }

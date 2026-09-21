@@ -1,18 +1,17 @@
-# ESP32 display and TinyProcess
+# ESP32 display and Sidekick
 
 - [`esp32/`](esp32/README.md): ESP32-C5 firmware, PlatformIO/CLion configuration and firmware media.
-- [`tinyprocess/`](tinyprocess/README.md): Electron desktop app, configuration, video/overlay rendering and packaging.
-- [`.github/workflows/build.yml`](.github/workflows/build.yml): builds both projects, then publishes artifacts on `v*` tags.
+- [`sidekick/`](sidekick/README.md): Electron desktop app, configuration, video/overlay rendering and packaging.
 
 ## Desktop app
 
 ```sh
-cd tinyprocess
+cd sidekick
 npm ci
 npm start
 ```
 
-Set the config endpoint in Settings. See the [desktop README](tinyprocess/README.md) for endpoint examples and button actions.
+Set the config endpoint in Settings. See the [desktop README](sidekick/README.md) for endpoint examples and button actions.
 
 ## ESP32 firmware
 

@@ -10,7 +10,7 @@ const MAX_FRAMES = 128 * 1024 * 1024;
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 
 function ffmpegPath() {
-    if (process.env.TINYTASK_FFMPEG) return process.env.TINYTASK_FFMPEG;
+    if (process.env.SIDEKICK_FFMPEG) return process.env.SIDEKICK_FFMPEG;
     // electron-builder unpacks the executable outside the asar archive.
     return require('ffmpeg-static').replace('app.asar', 'app.asar.unpacked');
 }

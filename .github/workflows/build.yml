@@ -47,7 +47,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
-        working-directory: tinyprocess
+        working-directory: sidekick
     strategy:
       fail-fast: false
       matrix:
@@ -58,7 +58,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: tinyprocess/package-lock.json
+          cache-dependency-path: sidekick/package-lock.json
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
         run: |
@@ -73,15 +73,15 @@ jobs:
       - name: Upload desktop packages
         uses: actions/upload-artifact@v4
         with:
-          name: TinyProcess-${{ matrix.os }}
+          name: Sidekick-${{ matrix.os }}
           path: |
-            tinyprocess/dist/*.exe
-            tinyprocess/dist/*.dmg
-            tinyprocess/dist/*.AppImage
-            tinyprocess/dist/*.deb
-            tinyprocess/dist/*.zip
-            tinyprocess/dist/*.blockmap
-            tinyprocess/dist/latest*.yml
+            sidekick/dist/*.exe
+            sidekick/dist/*.dmg
+            sidekick/dist/*.AppImage
+            sidekick/dist/*.deb
+            sidekick/dist/*.zip
+            sidekick/dist/*.blockmap
+            sidekick/dist/latest*.yml
           if-no-files-found: error
 
   release:

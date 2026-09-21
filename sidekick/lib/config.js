@@ -21,7 +21,7 @@ function loadConfig(filename, env = process.env) {
     try { saved = JSON.parse(readFileSync(filename, 'utf8')); }
     catch (error) { if (error.code !== 'ENOENT') throw error; }
     // A config endpoint cannot be inferred from the previous page/data URLs.
-    const value = { configUrl: env.TINYTASK_CONFIG_URL || saved.configUrl || '', serialPort: saved.serialPort || '' };
+    const value = { configUrl: env.SIDEKICK_CONFIG_URL || saved.configUrl || '', serialPort: saved.serialPort || '' };
     if (!value.configUrl) return { ...DEFAULTS, serialPort: value.serialPort.trim() };
     return validateConfig(value);
 }

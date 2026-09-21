@@ -1,7 +1,7 @@
 # ESP32 display firmware
 
 Firmware for the **ESP32-C5-DevKitC-1** with a 160×160 display and two buttons.
-It receives video frames from [TinyProcess](../tinyprocess/README.md) over native
+It receives video frames from [Sidekick](../sidekick/README.md) over native
 USB and sends button events back. The built in colors animation plays on boot
 and after two seconds without video data.
 
@@ -16,14 +16,14 @@ python3 -m pip install platformio==6.1.19
 pio run
 ```
 
-Connect the board and close TinyProcess or any serial monitor before flashing:
+Connect the board and close Sidekick or any serial monitor before flashing:
 
 ```sh
 pio run --target upload
 ```
 
 If needed, add `--upload-port /dev/ttyACM0` with your board's port.
-Use the board's **native USB port** for TinyProcess video and button input.
+Use the board's **native USB port** for Sidekick video and button input.
 
 ## Display wiring
 
@@ -54,4 +54,4 @@ Connect normally open momentary switches:
 
 Internal pull-ups are enabled; no external resistors are needed. Do not connect
 the buttons to 5V. Single press, hold, double click, and combined-button gestures
-are configured through [TinyProcess button actions](../tinyprocess/README.md#buttons-and-window-actions).
+are configured through [Sidekick button actions](../sidekick/README.md#buttons-and-window-actions).

@@ -1,16 +1,22 @@
-# TinyProcess
+# Sidekick
 
 Desktop tray app that displays a web page and plays API-selected videos on an
 ESP32 display. See [firmware setup and wiring](../esp32/README.md).
 
 ## Run
 
-Use Node.js 22 or later. From `tinyprocess/`:
+Use Node.js 22 or later. From `sidekick/`:
 
 ```sh
 npm ci
 npm start
 ```
+
+The `allowScripts` entries in `package.json` permit the install scripts needed
+by Electron, serialport, FFmpeg, and the Windows installer tooling. If an earlier
+install skipped these scripts, run `npm rebuild` before starting the app. When
+updating these dependencies with npm 12 or later, review `npm install-scripts ls`
+and approve the new versions with `npm install-scripts approve <package>`.
 
 In **Settings**, enter the config endpoint URL. Leave the USB port blank to
 select a single connected Espressif device, or enter a port such as `/dev/ttyACM0`
@@ -28,9 +34,9 @@ Return the page and info URLs, plus any button actions:
   "success": true,
   "data": {
     "endpoints": {
-      "page": "/pmt/gadget/tinytask/display",
-      "info": "/pmt/api/gadget/tinytask",
-      "button1Pressed": { "action": "request", "type": "POST", "url": "/pmt/api/gadget/tinytask/toggle" },
+      "page": "/pmt/gadget/sidekick/display",
+      "info": "/pmt/api/gadget/sidekick",
+      "button1Pressed": { "action": "request", "type": "POST", "url": "/pmt/api/gadget/sidekick/toggle" },
       "button1Held": null,
       "button1DoubleClicked": null,
       "button2Pressed": null,
@@ -74,7 +80,7 @@ The server chooses the MP4 and optional overlays:
   "serverTime": "2026-09-18T12:00:05.000Z",
   "data": {
     "video": "green-static.mp4",
-    "downloadUrl": "/pmt/api/gadget/tinytask/videos/green-static.mp4",
+    "downloadUrl": "/pmt/api/gadget/sidekick/videos/green-static.mp4",
     "checksum": "c37b9fed6f30a8ff19d8850dc4eb9ac18688c5b6d0caea0a2fb89a7d809e4488",
     "overlays": [
       {

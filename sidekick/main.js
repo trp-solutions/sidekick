@@ -48,7 +48,7 @@ function trustedSettings(event) {
     }
 }
 function updateTray() {
-    tray?.setToolTip(`TinyProcess — ${configError ? `Config: ${configError}` : usbStatus}`.slice(0, 127));
+    tray?.setToolTip(`Sidekick — ${configError ? `Config: ${configError}` : usbStatus}`.slice(0, 127));
 }
 async function showOffline() {
     offline = true;
@@ -184,10 +184,10 @@ else {
         try { config = loadConfig(configFile); }
         catch (error) {
             config = { ...DEFAULTS };
-            dialog.showErrorBox('TinyProcess settings', `Using default settings: ${error.message}`);
+            dialog.showErrorBox('Sidekick settings', `Using default settings: ${error.message}`);
         }
         videos = loadVideos(path.join(__dirname, 'media'));
-        pmtSession = session.fromPartition('persist:tinytask-pmt');
+        pmtSession = session.fromPartition('persist:sidekick-pmt');
         pmtSession.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
         pmtSession.setPermissionCheckHandler(() => false);
         mainWindow = new BrowserWindow({ width: 800, height: 600,
@@ -210,7 +210,7 @@ else {
         });
         mainWindow.webContents.on('render-process-gone', () => { void showOffline(); });
         const menuItems = [
-            { label: 'Show TinyProcess', click: showWindow },
+            { label: 'Show Sidekick', click: showWindow },
             { label: 'Settings…', click: showSettings },
             { label: 'Reconnect', click: () => { void refreshConfig().then(() => loadPage()); } },
             { type: 'separator' },
@@ -220,7 +220,7 @@ else {
         tray.setContextMenu(Menu.buildFromTemplate(menuItems));
         tray.on('click', () => mainWindow.isVisible() ? mainWindow.hide() : showWindow());
         Menu.setApplicationMenu(Menu.buildFromTemplate([
-            { label: 'TinyProcess', submenu: menuItems },
+            { label: 'Sidekick', submenu: menuItems },
             { label: 'Edit', submenu: [{ role: 'undo' }, { role: 'redo' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' }] },
         ]));
         ipcMain.handle('settings:get', event => { trustedSettings(event); return config; });
@@ -242,7 +242,7 @@ else {
             else if (offline) void loadPage();
         }, 10000);
         app.on('activate', showWindow);
-    }).catch(error => { dialog.showErrorBox('TinyProcess could not start', error.message); app.quit(); });
+    }).catch(error => { dialog.showErrorBox('Sidekick could not start', error.message); app.quit(); });
     app.on('window-all-closed', () => {});
     app.on('before-quit', event => {
         if (isQuitting) return;
