@@ -97,4 +97,9 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           fail_on_unmatched_files: true
-          files: artifacts/**/*
+          files: |
+            artifacts/Sidekick-windows-latest/*.exe
+            artifacts/Sidekick-macos-latest/*.dmg
+            artifacts/Sidekick-ubuntu-latest/*.AppImage
+            artifacts/Sidekick-ubuntu-latest/*.deb
+            artifacts/ESP32-C5-firmware/firmware.factory.bin
