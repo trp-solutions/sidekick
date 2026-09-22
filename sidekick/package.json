@@ -11,7 +11,8 @@
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder",
-    "build:media": "python3 scripts/build-media.py"
+    "build:media": "python3 scripts/build-media.py",
+    "build:icons": "python3 scripts/build-icons.py"
   },
   "devDependencies": {
     "electron": "^36.0.0",
@@ -30,24 +31,24 @@
       "lib/**/*",
       "*.html",
       "style.css",
-      "icon.png",
+      "icons/generated/**/*",
       "media/colors-idle.rgb565.gz",
       "package.json"
     ],
     "mac": {
       "target": "dmg",
-      "icon": "icon.png"
+      "icon": "icons/generated/sidekick.png"
     },
     "win": {
       "target": "nsis",
-      "icon": "icon.png"
+      "icon": "icons/generated/sidekick.png"
     },
     "linux": {
       "target": [
         "AppImage",
         "deb"
       ],
-      "icon": "icon.png",
+      "icon": "icons/generated/sidekick.png",
       "category": "Utility"
     },
     "asarUnpack": [

@@ -1,6 +1,7 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, session, dialog } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, session, dialog, nativeTheme } = require('electron');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
+const { createTrayIcon } = require('./lib/tray-icon');
 const { SerialPort } = require('serialport');
 const { DEFAULTS, loadConfig, saveConfig, fetchConfig } = require('./lib/config');
 const { DisplayController, loadVideos } = require('./lib/display');
@@ -210,19 +211,34 @@ else {
         });
         mainWindow.webContents.on('render-process-gone', () => { void showOffline(); });
         const menuItems = [
-            { label: 'Show Sidekick', click: showWindow },
+            { label: `Sidekick v${app.getVersion()}`, enabled: false },
+            { type: 'separator' },
             { label: 'Settings…', click: showSettings },
             { label: 'Reconnect', click: () => { void refreshConfig().then(() => loadPage()); } },
             { type: 'separator' },
             { label: 'Quit', click: () => app.quit() },
         ];
-        tray = new Tray(path.join(__dirname, 'icon.png'));
-        tray.setContextMenu(Menu.buildFromTemplate(menuItems));
-        tray.on('click', () => mainWindow.isVisible() ? mainWindow.hide() : showWindow());
-        Menu.setApplicationMenu(Menu.buildFromTemplate([
+        tray = new Tray(createTrayIcon());
+        nativeTheme.on('updated', () => {
+            if (!isQuitting && !tray.isDestroyed()) tray.setImage(createTrayIcon());
+        });
+        const trayMenu = Menu.buildFromTemplate(menuItems);
+        const applicationMenu = process.platform === 'darwin' ? Menu.buildFromTemplate([
             { label: 'Sidekick', submenu: menuItems },
-            { label: 'Edit', submenu: [{ role: 'undo' }, { role: 'redo' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' }] },
-        ]));
+        ]) : null;
+        Menu.setApplicationMenu(applicationMenu);
+        // A registered menu on macOS also opens on left click, so only pop it
+        // up explicitly on right click there. Windows/Linux use the native menu.
+        if (process.platform === 'darwin') {
+            tray.setIgnoreDoubleClickEvents(true);
+            tray.on('right-click', () => tray.popUpContextMenu(trayMenu));
+        } else {
+            tray.setContextMenu(trayMenu);
+        }
+        tray.on('click', () => {
+            if (mainWindow.isVisible() && !mainWindow.isMinimized()) mainWindow.hide();
+            else showWindow();
+        });
         ipcMain.handle('settings:get', event => { trustedSettings(event); return config; });
         ipcMain.handle('settings:save', async (event, value) => {
             trustedSettings(event);
