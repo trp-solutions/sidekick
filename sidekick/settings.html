@@ -12,9 +12,13 @@
     <h1>Settings</h1>
     <form>
       <label for="configUrl">Config URL</label>
-      <input id="configUrl" name="configUrl" type="url" required placeholder="https://example.com/api/config">
+      <input id="configUrl" name="configUrl" type="url" placeholder="https://example.com/api/config">
       <label for="serialPort">USB port (optional)</label>
       <input id="serialPort" name="serialPort" placeholder="Automatic">
+      <label class="checkbox" for="openAtLogin">
+        <input id="openAtLogin" name="openAtLogin" type="checkbox" checked>
+        Open at login in the background
+      </label>
       <button type="submit">Save and reconnect</button>
       <p id="message" role="status"></p>
     </form>

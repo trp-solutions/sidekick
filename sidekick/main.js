@@ -2,6 +2,7 @@ const { app, BrowserWindow, Tray, Menu, ipcMain, session, dialog, nativeTheme } 
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { createTrayIcon } = require('./lib/tray-icon');
+const { startsInBackground, setOpenAtLogin } = require('./lib/startup');
 const { SerialPort } = require('serialport');
 const { DEFAULTS, loadConfig, saveConfig, fetchConfig } = require('./lib/config');
 const { DisplayController, loadVideos } = require('./lib/display');
@@ -179,19 +180,27 @@ async function applyConfig(next) {
 
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
-    app.on('second-instance', () => { if (mainWindow) showWindow(); });
+    app.on('second-instance', (_event, argv) => { if (mainWindow && !argv.includes('--background')) showWindow(); });
     app.whenReady().then(async () => {
+        const background = startsInBackground(app);
         configFile = path.join(app.getPath('userData'), 'settings.json');
         try { config = loadConfig(configFile); }
         catch (error) {
             config = { ...DEFAULTS };
-            dialog.showErrorBox('Sidekick settings', `Using default settings: ${error.message}`);
+            if (background) console.error('Using default settings:', error.message);
+            else dialog.showErrorBox('Sidekick settings', `Using default settings: ${error.message}`);
         }
+        let startupError = null;
+        const updateStartup = () => {
+            try { setOpenAtLogin(app, config.openAtLogin); startupError = null; }
+            catch (error) { startupError = `Could not update open at login: ${error.message}`; console.error(startupError); }
+        };
+        updateStartup();
         videos = loadVideos(path.join(__dirname, 'media'));
         pmtSession = session.fromPartition('persist:sidekick-pmt');
         pmtSession.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
         pmtSession.setPermissionCheckHandler(() => false);
-        mainWindow = new BrowserWindow({ width: 800, height: 600,
+        mainWindow = new BrowserWindow({ width: 800, height: 600, show: !background,
             webPreferences: { ...securePreferences, session: pmtSession } });
         mainWindow.on('close', event => { if (!isQuitting) { event.preventDefault(); mainWindow.hide(); } });
         mainWindow.webContents.on('will-navigate', (event, url) => {
@@ -225,6 +234,8 @@ else {
         const trayMenu = Menu.buildFromTemplate(menuItems);
         const applicationMenu = process.platform === 'darwin' ? Menu.buildFromTemplate([
             { label: 'Sidekick', submenu: menuItems },
+            // macOS uses native menu roles for standard text-editing shortcuts.
+            { role: 'editMenu' },
         ]) : null;
         Menu.setApplicationMenu(applicationMenu);
         // A registered menu on macOS also opens on left click, so only pop it
@@ -239,20 +250,23 @@ else {
             if (mainWindow.isVisible() && !mainWindow.isMinimized()) mainWindow.hide();
             else showWindow();
         });
-        ipcMain.handle('settings:get', event => { trustedSettings(event); return config; });
+        ipcMain.handle('settings:get', event => { trustedSettings(event); return { ...config, startupError }; });
         ipcMain.handle('settings:save', async (event, value) => {
             trustedSettings(event);
             if (applying) throw new Error('Reconnection is already in progress');
             applying = true;
             try {
                 const next = saveConfig(configFile, value);
+                config = next;
+                updateStartup();
                 await applyConfig(next);
+                if (startupError) throw new Error(`Settings saved. ${startupError}`);
                 if (configError) throw new Error(`Settings saved. ${configError}. Retrying automatically.`);
                 return next;
             } finally { applying = false; }
         });
         await applyConfig(config);
-        if (!config.configUrl) { await showOffline(); showSettings(); }
+        if (!config.configUrl) { await showOffline(); if (!background) showSettings(); }
         retryTimer = setInterval(() => {
             if (!routes || configError) void refreshConfig();
             else if (offline) void loadPage();

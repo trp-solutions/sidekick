@@ -1,7 +1,7 @@
 const { readFileSync, writeFileSync, mkdirSync, renameSync } = require('node:fs');
 const { dirname } = require('node:path');
 const { BUTTON_EVENTS, WINDOW_ACTIONS } = require('./buttons');
-const DEFAULTS = { configUrl: '', serialPort: '' };
+const DEFAULTS = { configUrl: '', serialPort: '', openAtLogin: true };
 
 function httpUrl(value) {
     const url = new URL(value);
@@ -14,15 +14,18 @@ function validateConfig(value) {
     if (!value || typeof value.configUrl !== 'string' || typeof value.serialPort !== 'string') {
         throw new Error('Enter a config URL and an optional USB port.');
     }
-    return { configUrl: httpUrl(value.configUrl.trim()), serialPort: value.serialPort.trim() };
+    const openAtLogin = value.openAtLogin === undefined ? DEFAULTS.openAtLogin : value.openAtLogin;
+    if (typeof openAtLogin !== 'boolean') throw new Error('Open at login must be enabled or disabled.');
+    const configUrl = value.configUrl.trim();
+    return { configUrl: configUrl ? httpUrl(configUrl) : '', serialPort: value.serialPort.trim(), openAtLogin };
 }
 function loadConfig(filename, env = process.env) {
     let saved = {};
     try { saved = JSON.parse(readFileSync(filename, 'utf8')); }
     catch (error) { if (error.code !== 'ENOENT') throw error; }
     // A config endpoint cannot be inferred from the previous page/data URLs.
-    const value = { configUrl: env.SIDEKICK_CONFIG_URL || saved.configUrl || '', serialPort: saved.serialPort || '' };
-    if (!value.configUrl) return { ...DEFAULTS, serialPort: value.serialPort.trim() };
+    const value = { configUrl: env.SIDEKICK_CONFIG_URL || saved.configUrl || '', serialPort: saved.serialPort || '',
+        openAtLogin: saved.openAtLogin };
     return validateConfig(value);
 }
 function remoteConfig(value, configUrl) {
