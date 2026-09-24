@@ -1,6 +1,6 @@
 # ESP32 display and Sidekick
 
-- [`esp32/`](esp32/README.md): ESP32-C5 firmware, PlatformIO/CLion configuration and firmware media.
+- [`esp32/`](esp32/README.md): ESP32-S3 firmware, PlatformIO/CLion configuration and firmware media.
 - [`sidekick/`](sidekick/README.md): Electron desktop app, configuration, video/overlay rendering and packaging.
 
 ## Desktop app

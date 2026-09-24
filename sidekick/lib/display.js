@@ -19,28 +19,14 @@ function loadVideos(directory) {
     }));
 }
 
-function writeFrame(port, pixels, timeout = 3000) {
-    return new Promise((resolve, reject) => {
-        let finished = false;
-        let phase = 'write';
-        const timer = setTimeout(() => finish(new Error(`USB ${phase} timed out`)), timeout);
-        const onClose = () => finish(new Error('USB disconnected'));
-        const finish = error => {
-            if (finished) return;
-            finished = true;
-            clearTimeout(timer);
-            port.removeListener('error', finish);
-            port.removeListener('close', onClose);
-            if (error) reject(error); else resolve();
-        };
-        port.once('error', finish);
-        port.once('close', onClose);
-        port.write(pixels, error => {
-            if (finished) return;
-            if (error) finish(error);
-            else { phase = 'drain'; port.drain(finish); }
-        });
-    });
+function writeFrame(protocol, pixels, presentationUs) {
+    if (pixels.length !== FRAME_BYTES) return Promise.reject(new Error('Invalid display frame size'));
+    const payload = Buffer.alloc(12 + FRAME_BYTES);
+    payload.writeBigUInt64LE(BigInt(presentationUs), 0);
+    payload.writeUInt32LE(1000000 / FPS, 8);
+    pixels.copy(payload, 12);
+    // The device checks the CRC and acknowledges presentation before we send again.
+    return protocol.request(12, 4000, payload);
 }
 
 class DisplayController {
@@ -86,7 +72,7 @@ class DisplayController {
     async stop() {
         this.stopped = true;
         // Closing USB also releases a blocked write. Firmware switches to idle
-        // after its two-second watchdog; never send commands into raw relay data.
+        // after its two-second watchdog.
         await this.close();
         await this.running;
     }
@@ -117,17 +103,17 @@ class DisplayController {
                 });
                 await new Promise((resolve, reject) => port.open(error => error ? reject(error) : resolve()));
                 retrySerialReadiness(port);
-                // Allow reset on open and the previous raw relay session to expire.
+                // Allow reset on open and the previous streaming session to expire.
                 await sleep(2300);
                 if (this.stopped) break;
                 const info = await protocol.request(2);
-                if (info.readUInt16LE(0) < 1 || (info.readUInt16LE(0) === 1 && info.readUInt16LE(2) < 3)) {
-                    throw new Error('Flash firmware 1.3 for the built-in USB fallback');
+                if (info.readUInt16LE(0) < 1 || (info.readUInt16LE(0) === 1 && info.readUInt16LE(2) < 9)) {
+                    throw new Error('Flash firmware 1.9 for reliable USB frame streaming');
                 }
-                await protocol.request(13);
+                await protocol.request(7);
+                const streamOrigin = performance.now();
                 buttonsReady = true;
-                const oldFirmware = info.readUInt16LE(0) === 1 && info.readUInt16LE(2) < 5;
-                this.onStatus(`Display connected: ${path}${oldFirmware ? ' (full button support requires firmware 1.5)' : ''}`);
+                this.onStatus(`Display connected: ${path}`);
                 let playing;
                 let origin;
                 while (!this.stopped && port.isOpen) {
@@ -139,7 +125,8 @@ class DisplayController {
                     const frame = Math.floor((performance.now() - origin) * FPS / 1000);
                     const offset = (frame % (video.length / FRAME_BYTES)) * FRAME_BYTES;
                     this.refreshOverlay();
-                    await writeFrame(port, compositeFrame(video.subarray(offset, offset + FRAME_BYTES), this.layer));
+                    await writeFrame(protocol, compositeFrame(video.subarray(offset, offset + FRAME_BYTES), this.layer),
+                        Math.round((performance.now() - streamOrigin) * 1000));
                     await sleep(Math.max(0, origin + (frame + 1) * 1000 / FPS - performance.now()));
                 }
             } catch (error) {

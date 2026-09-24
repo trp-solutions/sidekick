@@ -23,6 +23,9 @@ select a single connected Espressif device, or enter a port such as `/dev/ttyACM
 or `COM4`. Connect the ESP's native USB port and sign in through the app window.
 API requests and downloads share that login session.
 
+Use firmware 1.9 or newer. Video frames are CRC-checked and acknowledged by the
+board before the next frame is sent, preventing USB byte loss from shifting pixels.
+
 Closing the window hides it to the tray. Choose **Quit** to stop the app.
 
 ## Config endpoint
@@ -56,7 +59,8 @@ Use **Reconnect**, save Settings, or restart the app to reload the config.
 
 ## Buttons and window actions
 
-Button 1 connects GPIO23 to GND; button 2 connects GPIO24 to GND. Use normally
+On the ESP32-S3-DevKitC-1, button 1 connects GPIO4 to GND; button 2 connects
+GPIO5 to GND. Use normally
 open momentary switches with the current firmware.
 
 - Requests: `{ "action": "request", "type": "GET", "url": "/path" }` (or `POST`).

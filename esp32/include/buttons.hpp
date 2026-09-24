@@ -10,7 +10,7 @@ public:
 		for (uint8_t bit = 0; bit < 2; ++bit) {
 			const uint8_t mask = 1 << bit;
 			if ((raw & mask) != (lastRaw & mask)) changed[bit] = now;
-			if (now - changed[bit] >= 30) stable = (stable & ~mask) | (raw & mask);
+			if (now - changed[bit] >= DEBOUNCE_MS) stable = (stable & ~mask) | (raw & mask);
 		}
 		lastRaw = raw;
 		if (!gesture && stable) {
@@ -67,6 +67,7 @@ public:
 		return event;
 	}
 private:
+	static constexpr uint32_t DEBOUNCE_MS = 10;
 	static constexpr uint32_t DOUBLE_CLICK_MS = 300;
 	void emit(uint8_t event) { if (eventCount < 4) events[eventCount++] = event; }
 	uint8_t lastRaw = 0, stable = 0, gesture = 0;

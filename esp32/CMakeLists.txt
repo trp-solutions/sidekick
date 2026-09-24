@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 # PlatformIO owns the firmware build; CMake supplies CLion's project model.
 find_program(PLATFORMIO_EXECUTABLE NAMES pio platformio
     HINTS "$ENV{HOME}/.platformio/penv/bin" REQUIRED)
-set(PLATFORMIO_ENV "esp32-c5-devkitc-1" CACHE STRING "PlatformIO environment")
+set(PLATFORMIO_ENV "esp32-s3-devkitc-1" CACHE STRING "PlatformIO environment")
 
 execute_process(
     COMMAND "${PLATFORMIO_EXECUTABLE}" run --environment "${PLATFORMIO_ENV}" --target idedata
@@ -18,7 +18,7 @@ endif()
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/.pio/build/${PLATFORMIO_ENV}/idedata.json" PLATFORMIO_METADATA)
 string(JSON PLATFORMIO_CXX GET "${PLATFORMIO_METADATA}" cxx_path)
 set(CMAKE_SYSTEM_NAME Generic)
-set(CMAKE_SYSTEM_PROCESSOR riscv32)
+set(CMAKE_SYSTEM_PROCESSOR xtensa)
 set(CMAKE_CXX_COMPILER "${PLATFORMIO_CXX}" CACHE FILEPATH "PlatformIO C++ compiler" FORCE)
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

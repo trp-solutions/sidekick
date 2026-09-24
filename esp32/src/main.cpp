@@ -6,12 +6,13 @@
 
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 
 #include "driver/spi_master.h"
-#include "esp32c5/rom/tjpgd.h"
+#include "esp32s3/rom/tjpgd.h"
 #include "esp_heap_caps.h"
 #include "esp_timer.h"
 
@@ -22,9 +23,10 @@ extern const uint8_t idleVideoEnd[] asm("_binary_media_colors_idle_bin_end");
 uint64_t idleStartedUs = 0;
 uint64_t idleFrameNumber = UINT64_MAX;
 
-constexpr int PIN_BUTTON_1 = 23;
-constexpr int PIN_BUTTON_2 = 24;
-edl::Buttons buttons;
+constexpr int PIN_BUTTON_1 = 4;
+constexpr int PIN_BUTTON_2 = 5;
+QueueHandle_t buttonEvents = nullptr;
+std::atomic<bool> buttonInputEnabled{false};
 uint32_t buttonSequence = 0;
 
 constexpr int PIN_LCD_MOSI = 7;
@@ -37,7 +39,7 @@ constexpr int LCD_WIDTH = 160;
 constexpr int LCD_HEIGHT = 160;
 constexpr uint32_t LCD_SPI_HZ = 27'000'000;
 constexpr size_t FRAME_BYTES = LCD_WIDTH * LCD_HEIGHT * 2;
-// C5 SPI DMA transactions are limited to 262143 bits (less than 32 KiB).
+// Keep each SPI DMA transaction below 32 KiB.
 constexpr int STRIPE_ROWS = 80;
 constexpr size_t STRIPE_BYTES = LCD_WIDTH * STRIPE_ROWS * 2;
 static_assert(LCD_HEIGHT % STRIPE_ROWS == 0);
@@ -298,16 +300,35 @@ void sendPacket(edl::MessageType type, uint32_t sequence, const void *payload, u
 	if (length > 0) Serial.write(static_cast<const uint8_t *>(payload), length);
 }
 
+// Sample independently of USB parsing, JPEG decoding and blocking SPI transfers.
+// Only the main loop writes USB packets, so button and frame replies cannot interleave.
+void sampleButtons(void *) {
+	edl::Buttons buttons;
+	TickType_t wake = xTaskGetTickCount();
+	for (;;) {
+		if (buttonInputEnabled.load(std::memory_order_relaxed)) {
+			const uint8_t mask = (digitalRead(PIN_BUTTON_1) == LOW ? 1 : 0) |
+				(digitalRead(PIN_BUTTON_2) == LOW ? 2 : 0);
+			const uint8_t event = buttons.update(mask, millis());
+			if (event) xQueueSend(buttonEvents, &event, 0);
+		} else {
+			buttons = edl::Buttons{};
+		}
+		vTaskDelayUntil(&wake, pdMS_TO_TICKS(1));
+	}
+}
+
 void pollButtons() {
-	if (!relayActive || !Serial.isPlugged()) {
-		buttons = edl::Buttons{};
+	const bool enabled = (relayActive || streamArmed) && Serial.isPlugged();
+	buttonInputEnabled.store(enabled, std::memory_order_relaxed);
+	uint8_t event;
+	if (!enabled) {
+		while (xQueueReceive(buttonEvents, &event, 0) == pdTRUE) {}
 		return;
 	}
-	const uint8_t mask = (digitalRead(PIN_BUTTON_1) == LOW ? 1 : 0) |
-		(digitalRead(PIN_BUTTON_2) == LOW ? 2 : 0);
-	const uint8_t event = buttons.update(mask, millis());
-	// Never stall video streaming if the host stops reading USB.
-	if (event && Serial.availableForWrite() >= static_cast<int>(edl::PACKET_HEADER_SIZE + 1)) {
+	// Keep events queued if the host is temporarily unable to receive them.
+	while (Serial.availableForWrite() >= static_cast<int>(edl::PACKET_HEADER_SIZE + 1) &&
+		xQueueReceive(buttonEvents, &event, 0) == pdTRUE) {
 		sendPacket(edl::MessageType::BUTTON_EVENT, ++buttonSequence, &event, 1);
 	}
 }
@@ -322,7 +343,7 @@ void sendInfo(uint32_t sequence) {
 	const auto &saved = animationStore.activeHeader();
 	edl::InfoPayload info{};
 	info.firmwareMajor = 1;
-	info.firmwareMinor = 8;
+	info.firmwareMinor = 10;
 	info.protocolVersion = edl::PROTOCOL_VERSION;
 	info.mode = static_cast<uint8_t>(mode);
 	info.hasSavedAnimation = animationStore.hasAnimation();
@@ -631,11 +652,16 @@ void playPendingLive() {
 
 void setup() {
 	Serial0.begin(115200);
-	Serial.setRxBufferSize(16384);
+	// HWCDC drops incoming bytes when its queue fills. Hold a whole packet
+	// while the main task is decoding or presenting the previous frame.
+	if (Serial.setRxBufferSize(edl::MAX_PACKET_PAYLOAD + edl::PACKET_HEADER_SIZE) == 0) abort();
 	Serial.setTxBufferSize(2048);
 	Serial.begin();
 	pinMode(PIN_BUTTON_1, INPUT_PULLUP);
 	pinMode(PIN_BUTTON_2, INPUT_PULLUP);
+	buttonEvents = xQueueCreate(16, sizeof(uint8_t));
+	if (buttonEvents == nullptr ||
+		xTaskCreate(sampleButtons, "buttons", 2048, nullptr, 2, nullptr) != pdPASS) abort();
 	pinMode(PIN_LCD_DC, OUTPUT);
 	pinMode(PIN_LCD_RST, OUTPUT);
 	pinMode(PIN_LCD_BL, OUTPUT);

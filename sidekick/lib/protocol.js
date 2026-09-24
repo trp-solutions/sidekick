@@ -70,7 +70,7 @@ class Protocol {
         }
     }
 
-    request(type, timeout = 4000) {
+    request(type, timeout = 4000, payload = Buffer.alloc(0)) {
         if (this.pending) return Promise.reject(new Error('A USB command is already pending'));
         const sequence = this.sequence = (this.sequence + 1) >>> 0;
         return new Promise((resolve, reject) => {
@@ -81,7 +81,7 @@ class Protocol {
             };
             const timer = setTimeout(() => this.fail(new Error('ESP response timed out')), timeout);
             this.pending = { type, sequence, resolve: finish(resolve), reject: finish(reject) };
-            this.port.write(packet(type, sequence), error => { if (error) this.fail(error); });
+            this.port.write(packet(type, sequence, payload), error => { if (error) this.fail(error); });
         });
     }
 }
